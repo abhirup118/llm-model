@@ -1,0 +1,15 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Model checkpoints & large binaries (too large for git)
+checkpoints/
+checkpoints_*/
+*.pt
+*.pt.tmp
+
+# macOS system files
+.DS_Store
