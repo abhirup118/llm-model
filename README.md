@@ -35,7 +35,24 @@ python train.py \
     --out_dir checkpoints_medium
 ```
 
-### 2. Generating Text
+### 2. Knowledge Distillation (Teacher-Student)
+
+Distill knowledge from a pre-trained Hugging Face teacher (e.g. `gpt2` with ~124M parameters) into a compact student model (e.g. `nano` ~7M or `tiny` ~12M parameters):
+
+```bash
+# Distill using GPT-2 as teacher onto TinyStories
+python distill.py \
+    --teacher gpt2 \
+    --student_template nano \
+    --data data/raw/tinystories.txt \
+    --temperature 2.0 \
+    --alpha 0.5 \
+    --max_steps 2000 \
+    --batch_size 16 \
+    --out_dir checkpoints_distill
+```
+
+### 3. Generating Text
 
 ```bash
 # CLI text generation
@@ -46,7 +63,7 @@ python generate.py \
     --max_tokens 150
 ```
 
-### 3. Interactive Shell
+### 4. Interactive Shell
 
 ```bash
 # Live interactive streaming playground
@@ -59,9 +76,10 @@ python interactive.py
 .
 ├── model.py           # GPT-style Transformer architecture with SDPA
 ├── train.py           # Training loop, data pipeline, and checkpointing
+├── distill.py         # Knowledge Distillation (Hugging Face teacher -> student)
 ├── generate.py        # Text generation with top-k / top-p sampling
 ├── interactive.py     # Interactive streaming terminal playground
-├── requirements.txt   # Python dependencies (torch, tokenizers)
+├── requirements.txt   # Python dependencies (torch, tokenizers, transformers)
 ├── data/raw/          # Raw training datasets (.txt)
 └── tokenizer/         # Trained Byte-Level BPE tokenizer
 ```
