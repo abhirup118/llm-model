@@ -41,7 +41,7 @@ def check_gpu():
         print("   If on Kaggle, ensure 'Accelerator: GPU T4 x 2' is selected in the right sidebar.")
 
 
-def prepare_dataset(corpus_path: Path, target_docs: int = 250_000) -> Path:
+def prepare_dataset(corpus_path: Path, target_docs: int = 75_000) -> Path:
     if corpus_path.exists() and corpus_path.stat().st_size > 10 * 1024 * 1024:
         size_mb = corpus_path.stat().st_size / (1024 * 1024)
         print(f"✓ Dataset already exists at {corpus_path} ({size_mb:.2f} MB). Skipping download.")
@@ -165,7 +165,7 @@ def main():
     out_dir = base_dir / "checkpoints_100m"
 
     # Execute Pipeline
-    prepare_dataset(corpus_path, target_docs=250_000)
+    prepare_dataset(corpus_path, target_docs=75_000)
     tok_path = train_tokenizer(corpus_path, tok_dir, vocab_size=32000)
     run_training(corpus_path, tok_path, out_dir, max_steps=4500)
     validate_generation(out_dir)

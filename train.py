@@ -243,19 +243,25 @@ def make_collate(pad_id: int):
 
 
 def encode_files(tok, files: List[Path], eos_id: Optional[int]) -> torch.Tensor:
-    """Encode each file as a document, separated by </s>. Large files are encoded in line-aligned chunks."""
+    """Encode files as documents, separated by </s>. Streams line by line to prevent OOM on large files."""
     ids: List[int] = []
+    chunk_chars = 1 << 20  # 1 MB chunk buffer
     for f in files:
-        text = f.read_text(encoding="utf-8", errors="replace")
-        chunks, chunk_chars, buf, size = [], 1 << 20, [], 0
-        for line in text.splitlines(keepends=True):
-            buf.append(line); size += len(line)
-            if size >= chunk_chars:
-                chunks.append("".join(buf)); buf, size = [], 0
-        if buf:
-            chunks.append("".join(buf))
-        for enc in tok.encode_batch(chunks, add_special_tokens=False):
-            ids.extend(enc.ids)
+        with open(f, "r", encoding="utf-8", errors="replace") as fp:
+            buf = []
+            size = 0
+            for line in fp:
+                buf.append(line)
+                size += len(line)
+                if size >= chunk_chars:
+                    text_chunk = "".join(buf)
+                    enc = tok.encode(text_chunk, add_special_tokens=False)
+                    ids.extend(enc.ids)
+                    buf, size = [], 0
+            if buf:
+                text_chunk = "".join(buf)
+                enc = tok.encode(text_chunk, add_special_tokens=False)
+                ids.extend(enc.ids)
         if eos_id is not None:
             ids.append(eos_id)
     return torch.tensor(ids, dtype=torch.long)
