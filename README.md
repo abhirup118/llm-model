@@ -35,7 +35,36 @@ python train.py \
     --out_dir checkpoints_medium
 ```
 
-### 2. Knowledge Distillation (Teacher-Student)
+### 2. Pre-training 100M Model on Free Cloud GPUs (Kaggle)
+
+Train the ~110M parameter `small` model (12 layers, 12 heads, dim 768, ctx 1024) from scratch on Kaggle Dual Nvidia T4 GPUs:
+
+```bash
+# Automated end-to-end runner (dataset download, 32k tokenizer, 4500 training steps, generation validation)
+python kaggle_train_100m.py
+```
+*(Or upload the notebook [`notebooks/train_100m_kaggle.ipynb`](file:///Users/abhirup/Desktop/code/llm-model/notebooks/train_100m_kaggle.ipynb) directly to Kaggle and select **Save & Run All**).*
+
+### 3. Supervised Fine-Tuning (SFT / Instruction Tuning)
+
+Transform a pre-trained base completion model into an instruction-following conversational assistant:
+
+```bash
+# 1. Download and format Alpaca instruction pairs with prompt loss masking
+python prepare_sft_data.py
+
+# 2. Run SFT with prompt masking and conservative learning rate
+python sft.py \
+    --base_checkpoint checkpoints_medium/checkpoint-best.pt \
+    --data_dir data/sft \
+    --out_dir checkpoints_sft \
+    --batch_size 8 \
+    --grad_accum 2 \
+    --lr 2e-5 \
+    --max_steps 800
+```
+
+### 4. Knowledge Distillation (Teacher-Student)
 
 Distill knowledge from a pre-trained Hugging Face teacher (e.g. `gpt2` with ~124M parameters) into a compact student model (e.g. `nano` ~7M or `tiny` ~12M parameters):
 
@@ -52,21 +81,21 @@ python distill.py \
     --out_dir checkpoints_distill
 ```
 
-### 3. Generating Text
+### 5. Generating Text
 
 ```bash
 # CLI text generation
 python generate.py \
-    --checkpoint checkpoints_medium/checkpoint-best.pt \
-    --prompt "Once upon a time, there was a little dog named Toby." \
-    --temperature 0.75 \
-    --max_tokens 150
+    --checkpoint checkpoints_sft/checkpoint-best.pt \
+    --prompt "User: What is the opposite of hot?\nAssistant:" \
+    --temperature 0.6 \
+    --max_tokens 100
 ```
 
-### 4. Interactive Shell
+### 6. Interactive Shell
 
 ```bash
-# Live interactive streaming playground
+# Live interactive streaming playground (automatically detects SFT chat mode)
 python interactive.py
 ```
 
@@ -74,12 +103,16 @@ python interactive.py
 
 ```
 .
-├── model.py           # GPT-style Transformer architecture with SDPA
-├── train.py           # Training loop, data pipeline, and checkpointing
-├── distill.py         # Knowledge Distillation (Hugging Face teacher -> student)
-├── generate.py        # Text generation with top-k / top-p sampling
-├── interactive.py     # Interactive streaming terminal playground
-├── requirements.txt   # Python dependencies (torch, tokenizers, transformers)
-├── data/raw/          # Raw training datasets (.txt)
-└── tokenizer/         # Trained Byte-Level BPE tokenizer
+├── model.py                     # GPT-style Transformer architecture with SDPA
+├── train.py                     # Pre-training loop, data pipeline, and checkpointing
+├── sft.py                       # Supervised Fine-Tuning with prompt loss masking
+├── prepare_sft_data.py          # Instruction dataset downloader and formatter
+├── kaggle_train_100m.py         # Automated Kaggle pre-training runner for 100M model
+├── notebooks/                   # Jupyter notebooks (train_100m_kaggle.ipynb)
+├── distill.py                   # Knowledge Distillation (Hugging Face teacher -> student)
+├── generate.py                  # Text generation with top-k / top-p sampling
+├── interactive.py               # Interactive streaming terminal playground
+├── requirements.txt             # Python dependencies
+├── data/raw/                    # Raw text corpora
+└── tokenizer/                   # Byte-Level BPE tokenizer
 ```

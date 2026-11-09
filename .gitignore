@@ -11,5 +11,12 @@ checkpoints_*/
 *.pt
 *.pt.tmp
 
+# Downloaded large datasets
+data/large_corpus/
+data/sft/
+
+# Logs
+*.log
+
 # macOS system files
 .DS_Store
