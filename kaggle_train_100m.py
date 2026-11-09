@@ -107,13 +107,14 @@ def train_tokenizer(corpus_path: Path, tok_dir: Path, vocab_size: int = 32000) -
     return tok_path
 
 
-def run_training(corpus_path: Path, out_dir: Path, max_steps: int = 4500):
+def run_training(corpus_path: Path, tok_path: Path, out_dir: Path, max_steps: int = 4500):
     log(f"🏋️ Step 3/4: Starting 100M LLM Pre-Training ({max_steps:,} steps)...")
     out_dir.mkdir(parents=True, exist_ok=True)
 
     cmd = [
         sys.executable, "train.py",
         "--data", str(corpus_path),
+        "--tokenizer", str(tok_path),
         "--template", "small",
         "--vocab_size", "32000",
         "--batch_size", "8",
@@ -165,8 +166,8 @@ def main():
 
     # Execute Pipeline
     prepare_dataset(corpus_path, target_docs=250_000)
-    train_tokenizer(corpus_path, tok_dir, vocab_size=32000)
-    run_training(corpus_path, out_dir, max_steps=4500)
+    tok_path = train_tokenizer(corpus_path, tok_dir, vocab_size=32000)
+    run_training(corpus_path, tok_path, out_dir, max_steps=4500)
     validate_generation(out_dir)
 
     log("=" * 65)
@@ -179,3 +180,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
