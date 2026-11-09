@@ -111,14 +111,18 @@ def run_training(corpus_path: Path, tok_path: Path, out_dir: Path, max_steps: in
     log(f"🏋️ Step 3/4: Starting 100M LLM Pre-Training ({max_steps:,} steps)...")
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Prevent CUDA memory fragmentation
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
     cmd = [
         sys.executable, "train.py",
         "--data", str(corpus_path),
         "--tokenizer", str(tok_path),
         "--template", "small",
         "--vocab_size", "32000",
-        "--batch_size", "8",
-        "--grad_accum", "2",
+        "--batch_size", "4",       # Safe batch size for 14.6 GB T4 (cuts activation memory by 50%)
+        "--grad_accum", "4",       # Maintains effective batch size of 16 (4 x 4 = 16)
+        "--precision", "fp16",     # Native Turing Tensor Core FP16 with GradScaler
         "--max_steps", str(max_steps),
         "--eval_interval", "500",
         "--save_interval", "1500",
