@@ -8,8 +8,10 @@ __pycache__/
 # Model checkpoints & large binaries (too large for git)
 checkpoints/
 checkpoints_*/
+adapters/
 *.pt
 *.pt.tmp
+*.zip
 
 # Downloaded large datasets
 data/large_corpus/
